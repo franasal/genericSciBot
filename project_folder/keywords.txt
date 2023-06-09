@@ -1,0 +1,25 @@
+# modify this file to set the keywords to include/ignore or add a hashtag in the search
+# retweet_include_words Include tweets with these words when retweeting.
+# retweet_exclude_words Do not include tweets with these words when retweeting.
+# add_hashtag keywords to convert to hashtags
+# watch_add_hashtag do not retweet if search results include one of these keywords withouth any of the hash list
+
+>retweet_include_words
+vegan
+plant-based
+carnist
+plant
+>retweet_exclude_words
+sex
+sexual
+sexwork
+sexualwork
+fuck
+vaping
+>add_hashtag
+vegan
+plant based
+plant
+>watch_add_hashtag
+alzheimer
+depression
