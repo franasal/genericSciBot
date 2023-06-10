@@ -10,7 +10,7 @@ import datetime
 import feedparser
 import dateutil.parser
 from bs4 import BeautifulSoup
-from twitterscibot.telebot import telegram_bot_sendtext
+from twitbot4.telebot import telegram_bot_sendtext
 from schedule import Scheduler
 
 def loggert(path_log):
@@ -137,7 +137,7 @@ def check_json_exists(file_path: os.path, init_dict: dict) -> None:
         with open(file_path, "w") as json_file:
             json.dump(init_dict, json_file, indent=4)
 
-def retweet(logger, tweet: tweepy.Status):
+def retweet(logger, tweet):
     """
     re-tweet self last tweeted message.
     Args:
@@ -210,7 +210,7 @@ def get_followers_list(project_path) -> list:
         users_dic = json.load(json_file)
     return [x for x in users_dic if users_dic[x]["follower"] is True]
 
-def update_thread(text: str, tweet: tweepy.Status, api: tweepy.API) -> tweepy.Status:
+def update_thread(text: str, tweet, api: tweepy.API):
     """
     Add a tweet to a initiated thread
     Args:
@@ -411,7 +411,7 @@ def json_add_new_friend(project_path, user_id: str) -> None:
     with open(paths_dict["users_json_file"], "w") as json_file:
         json.dump(users_dic, json_file, indent=4)
 
-def get_longest_text(status: tweepy.Status) -> str:
+def get_longest_text(status) -> str:
     """
     Get the text of a quoted status
     Args:

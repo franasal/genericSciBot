@@ -4,7 +4,7 @@ import textwrap
 from os.path import expanduser
 from random import randint
 from dotenv import load_dotenv
-from twitterscibot.utils import *
+from twitbot4.utils import *
 
 IGNORE_ERRORS = [327, 139]
 
