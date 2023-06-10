@@ -18,7 +18,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "scibot=twitterscibot.main:main",
+            "twitterscibot=twitterscibot.main:main",
         ]
     },
     install_requires=[
