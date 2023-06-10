@@ -13,13 +13,11 @@ def main():
     Main function of scibot
 
     """
-
+    logger = loggert("./")
     if len(sys.argv) > 2:
         project_path = expanduser(sys.argv[1])
         env_path = os.path.join(project_path,".env")
         load_dotenv(dotenv_path=env_path, override=True)
-
-        logger = loggert(project_path)
         logger.info("\n### sciBot started ###\n\n")
         paths_dict=make_path_dict(project_path)
 

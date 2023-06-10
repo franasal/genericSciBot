@@ -2,12 +2,12 @@
 from setuptools import setup
 
 setup(
-    name="scienceBot",
+    name="twitterscibot",
     version="0.1.1.1",
     description="Bot for sci-com and policy-com ",
-    url="https://github.com/fanasal/science_bot",
+    url="https://github.com/fanasal/genericSciBot",
     license="GNU Affero General Public License v3.0",
-    packages=["scibot"],
+    packages=["twitterscibot"],
     keywords=[
         "psychedelics",
         "fact-checking",
@@ -18,7 +18,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "scibot=scibot.main:main",
+            "scibot=twitterscibot.main:main",
         ]
     },
     install_requires=[
