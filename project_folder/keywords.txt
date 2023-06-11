@@ -8,7 +8,8 @@
 vegan
 plant-based
 carnist
-plant
+vegetarian
+plant based
 >retweet_exclude_words
 sex
 sexual

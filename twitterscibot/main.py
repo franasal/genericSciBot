@@ -462,7 +462,7 @@ def filter_tweet(logger, project_path, search_results: list, twitter_api):
 
         if len(end_status.split()) > 3 and faved_sum[2] > 1:
 
-            joined_list = keywords_dict["add_hashtag"]
+            joined_list = keywords_dict["retweet_include_words"]
 
             # remove elements from the exclude words list
             keyword_matches = [
