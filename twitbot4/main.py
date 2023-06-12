@@ -38,15 +38,17 @@ def main():
 
             if sys.argv[2].lower() == "rss":
                 read_rss_and_tweet(logger, project_path)
-            elif sys.argv[2].lower() == "str":
-                if len(sys.argv) == 3:
-                    listen_stream_and_rt(sys.argv[3].split())
-                else:
-                    raise Exception('add list of hashtags to retweet ie. "#GoVegan, #VegansRock"')
+            # elif sys.argv[2].lower() == "str":
+            #     if len(sys.argv) == 3:
+            #         listen_stream_and_rt(sys.argv[3].split())
+            #     else:
+            #         raise Exception('add list of hashtags to retweet ie. "#GoVegan, #VegansRock"')
             elif sys.argv[2].lower() == "rtg":
                 search_and_retweet(logger, project_path, "global_search")
             elif sys.argv[2].lower() == "glv":
                 search_and_retweet(logger, project_path, "give_love")
+            elif sys.argv[2].lower() == "glvn":
+                search_and_retweet(logger, project_path, "give_love", now=True)
             elif sys.argv[2].lower() == "rtl":
                 search_and_retweet(logger, project_path, "list_search")
             elif sys.argv[2].lower() == "rto":
@@ -215,27 +217,41 @@ def filter_repeated_tweets(project_path, result_search: list, flag: str) -> list
     return [unique_results[x] for x in unique_results]
 
 
-def json_add_user(project_path, user_id: str) -> None:
+def json_add_entry(project_path, object_id: str) -> None:
     """
     add user to the interactions json file
     Args:
-        user_id: user id
+        object_id: object id
 
     Returns: None
 
     """
-    paths_dict = make_path_dict(project_path)
 
+    if "users.json" in project_path:
 
-    with open(paths_dict["users_json_file"], "r") as json_file:
-        users_dic = json.load(json_file)
-    if user_id not in users_dic:
-        users_dic[user_id] = {"follower": False, "interactions": 1}
-    else:
-        users_dic[user_id]["interactions"] += 1
+        with open(project_path, "r") as json_file:
+            users_dic = json.load(json_file)
+        if object_id not in users_dic:
+            users_dic[object_id] = {"follower": False, "interactions": 1}
+        else:
+            users_dic[object_id]["interactions"] += 1
+    
+        with open(project_path, "w") as json_file:
+            json.dump(users_dic, json_file, indent=4)
+            
+    elif "faved-tweets" in project_path:
+        
+        with open(project_path, "r") as json_file:
+            favs_dic = json.load(json_file)
+        if object_id not in favs_dic:
+            favs_dic[object_id] = {"follower": False, "interactions": 1}
+        else:
+            favs_dic[object_id]["interactions"] += 1
 
-    with open(paths_dict["users_json_file"], "w") as json_file:
-        json.dump(users_dic, json_file, indent=4)
+        with open(project_path, "w") as json_file:
+            json.dump(favs_dic, json_file, indent=4)
+        
+        
 
 
 def get_query(project_path) -> str:
@@ -256,7 +272,7 @@ def get_query(project_path) -> str:
     return include + " " + exclude
 
 
-def check_interactions(project_path, tweet: tweepy.Status) -> None:
+def check_interactions(project_path, tweet) -> None:
     """
     check if previously interacted with a user
     Args:
@@ -316,7 +332,7 @@ def try_retweet(project_path, logger,
             logger.info(f"Trying to rt {tweet_id}")
             write_to_logfile({in_tweet_id: {}}, paths_dict["posted_retweets_output_file"])
             _status = twitter_api.get_status(tweet_id)
-            json_add_user(project_path, _status.author.id_str)
+            json_add_entry(project_path, _status.author.id_str)
             if tweet_id == in_tweet_id:
                 id_mess = f"{tweet_id} original"
             else:
@@ -361,12 +377,14 @@ def find_simple_users(logger, project_path,
 
     """
     # get original retweeter:
-    down_lev_tweet = twitter_api.get_status(tweet_id)
+    tweet_object = twitter_api.get_status(tweet_id, tweet_mode="extended")
 
-    if hasattr(down_lev_tweet, "retweeted_status"):
-        retweeters = twitter_api.retweets(down_lev_tweet.retweeted_status.id_str)
-    else:
-        retweeters = twitter_api.retweets(tweet_id)
+
+    try:
+        original_id = tweet_object.retweeted_status.id
+        retweeters = twitter_api.get_retweets(original_id)
+    except AttributeError:  # Not a Retweet
+        retweeters = twitter_api.get_retweets(tweet_id)
 
     future_friends = []
     for retweet in retweeters:
@@ -436,6 +454,7 @@ def filter_tweet(logger, project_path, search_results: list, twitter_api):
     filtered_search_results = []
 
     keywords_dict = retrieve_keywords(project_path)
+    paths_dict = make_path_dict(project_path)
 
     for status in search_results:
 
@@ -453,7 +472,6 @@ def filter_tweet(logger, project_path, search_results: list, twitter_api):
 
             except tweepy.TweepError as e:
                 telegram_bot_sendtext(f"ERROR {e}, twitter.com/anyuser/status/{status.id_str}")
-                quoted_tweet = ""
                 continue
 
             end_status = get_longest_text(status) + get_longest_text(quoted_tweet)
@@ -482,8 +500,7 @@ def filter_tweet(logger, project_path, search_results: list, twitter_api):
 
                 if any(
                     [x for x in keyword_matches if x not in keywords_dict["watch_add_hashtag"]]
-                ):
-                    print(keyword_matches, status.full_text)
+                ) and not is_in_logfile(status.id_str, paths_dict["faved_tweets_output_file"]):
 
                     filtered_search_results.append(
                         (faved_sum, status.id_str, status.full_text)
@@ -491,11 +508,10 @@ def filter_tweet(logger, project_path, search_results: list, twitter_api):
                 else:
                     logger.info(f">> skipped, {keyword_matches}, {end_status}")
 
-
     return sorted(filtered_search_results)
 
 
-def try_give_love(logger, project_path, twitter_api, in_tweet_id, self_followers):
+def try_give_love(logger, project_path, twitter_api, in_tweet_id, self_followers, now=False):
     """
     try to favorite a post from simple users
     Args:
@@ -510,16 +526,19 @@ def try_give_love(logger, project_path, twitter_api, in_tweet_id, self_followers
 
     paths_dict = make_path_dict(project_path)
 
-    tweet_id = find_simple_users(logger, project_path, twitter_api, in_tweet_id, self_followers)
+    if not already_fav(in_tweet_id, twitter_api):
 
-    if not is_in_logfile(in_tweet_id, paths_dict["faved_tweets_output_file"]):
+        tweet_id = find_simple_users(logger, project_path, twitter_api, in_tweet_id, self_followers)
 
         try:
-            time.sleep(randint(0, 250))
+            if not now:
+                time.sleep(randint(0, 250))
             twitter_api.create_favorite(id=tweet_id)
-            write_to_logfile({in_tweet_id: {}}, paths_dict["faved_tweets_output_file"])
+            json_add_entry(paths_dict["faved_tweets_output_file"], in_tweet_id)
+
+            # write_to_logfile({in_tweet_id: {}}, paths_dict["faved_tweets_output_file"])
             _status = twitter_api.get_status(tweet_id)
-            json_add_user(project_path, _status.author.id_str)
+            json_add_entry(paths_dict["faved_tweets_output_file"], in_tweet_id)
             message_log = (
                 "faved tweet succesful: https://twitter.com/i/status/{}".format(
                     tweet_id
@@ -530,23 +549,24 @@ def try_give_love(logger, project_path, twitter_api, in_tweet_id, self_followers
 
             return True
 
-        except tweepy.TweepError as e:
-            if e.api_code in IGNORE_ERRORS:
-                write_to_logfile({in_tweet_id: {}}, paths_dict["faved_tweets_output_file"])
+        except tweepy.TweepyException as e:
+            if e.api_codes in IGNORE_ERRORS:
                 logger.debug(f"throw a en error {e}")
                 logger.exception(e)
                 telegram_bot_sendtext(f"{e}")
                 return False
             else:
+                json_add_entry(paths_dict["faved_tweets_output_file"], in_tweet_id)
                 logger.error(e)
                 telegram_bot_sendtext(f"{e}")
                 return True
 
     else:
-        logger.info("Already faved (id {})".format(tweet_id))
+        logger.info("Already faved (id {})".format(in_tweet_id))
+        telegram_bot_sendtext("Already faved (id {})".format(in_tweet_id))
 
 
-def fav_or_tweet(logger,project_path,  max_val, flag, twitter_api):
+def fav_or_tweet(logger,project_path,  max_val, flag, twitter_api, now=False):
     """
 
     use a tweet or a fav function depending on the flag called
@@ -569,7 +589,7 @@ def fav_or_tweet(logger,project_path,  max_val, flag, twitter_api):
         logger.info(f"{len(tweet_text.split())}, {tweet_text}")
 
         if flag == "give_love":
-            use_function = try_give_love(logger, project_path, twitter_api, tweet_id, self_followers)
+            use_function = try_give_love(logger, project_path, twitter_api, tweet_id, self_followers, now)
             log_message = "fav"
 
         else:
@@ -589,7 +609,7 @@ def fav_or_tweet(logger,project_path,  max_val, flag, twitter_api):
             continue
 
 
-def search_and_retweet(logger, project_path, flag: str = "global_search", count: int = 100):
+def search_and_retweet(logger, project_path, flag: str = "global_search", count: int = 100, now=False):
     """
     Search for a query in tweets, and retweet those tweets.
 
@@ -636,69 +656,69 @@ def search_and_retweet(logger, project_path, flag: str = "global_search", count:
 
     # get the most faved + rtweeted and retweet it
     max_val = filter_tweet(logger, project_path, filter_repeated_tweets(project_path, search_results, flag), twitter_api)
-    fav_or_tweet(logger, project_path, max_val, flag, twitter_api)
+    fav_or_tweet(logger, project_path, max_val, flag, twitter_api, now)
 
 
 
 
 banned_profiles = ['nydancesafe']
 
-class MyStreamListener(tweepy.Stream):
-
-    def on_status(self, status):
-
-        if hasattr(status, "retweeted_status"):  # Check if Retweet
-            telegram_bot_sendtext(f" check if retweet:, {status.retweeted_status.text}")
-            if "constellation" not in status.retweeted_status.text.lower():
-                pass
-        else:
-            try:
-                ## catch nesting
-                if status.user.screen_name in banned_profiles or status.in_reply_to_screen_name:
-                    pass
-                replied_to=status.in_reply_to_screen_name
-                answer_user=status.user.screen_name
-                answer_id=status.id
-                ## ignore replies that by default contain mention
-                in_reply_to_user_id=status.in_reply_to_user_id
-
-                telegram_bot_sendtext(f"{replied_to}, 'nesting', {in_reply_to_user_id}, 'replied to', {replied_to}, 'message', {status.text}")
-
-            except AttributeError:
-
-                replied_to=status.in_reply_to_screen_name
-                answer_user=status.user.screen_name
-                answer_id=status.id
-                in_reply_to_user_id=status.in_reply_to_user_id
-
-                telegram_bot_sendtext(f"ATRIB ERROR: {replied_to}, 'nesting', {in_reply_to_user_id}, 'replied to', {replied_to}, 'message', {status.text}")
-
-            update_status = f""" #ConstellationsFest live RT. From 16-24 NOV:
-
-https://twitter.com/{answer_user}/status/{answer_id}
-             """
-
-            # don't reply to yourself!!
-            self_ids = os.getenv("TWT_ID"), os.getenv("TWT_ID")
-            if status.user.id not in self_ids:
-
-                api = twitter_setup()
-                api.update_status(update_status,
-                auto_populate_reply_metadata=True)
-
-
-    def on_error(self, status):
-        telegram_bot_sendtext(f"ERROR with: {status}")
-
-def listen_stream_and_rt(keywords_list):
-    api = twitter_setup()
-    myStreamListener = MyStreamListener()
-    try:
-        myStream = tweepy.Stream(auth=api.auth, listener=myStreamListener)
-        myStream.filter(track=keywords_list, is_async=True)
-    except Exception as ex:
-        telegram_bot_sendtext(f"ERROR with: {ex}")
-        pass
+# class MyStreamListener(tweepy.Stream):
+#
+#     def on_status(self, status):
+#
+#         if hasattr(status, "retweeted_status"):  # Check if Retweet
+#             telegram_bot_sendtext(f" check if retweet:, {status.retweeted_status.text}")
+#             if "constellation" not in status.retweeted_status.text.lower():
+#                 pass
+#         else:
+#             try:
+#                 ## catch nesting
+#                 if status.user.screen_name in banned_profiles or status.in_reply_to_screen_name:
+#                     pass
+#                 replied_to=status.in_reply_to_screen_name
+#                 answer_user=status.user.screen_name
+#                 answer_id=status.id
+#                 ## ignore replies that by default contain mention
+#                 in_reply_to_user_id=status.in_reply_to_user_id
+#
+#                 telegram_bot_sendtext(f"{replied_to}, 'nesting', {in_reply_to_user_id}, 'replied to', {replied_to}, 'message', {status.text}")
+#
+#             except AttributeError:
+#
+#                 replied_to=status.in_reply_to_screen_name
+#                 answer_user=status.user.screen_name
+#                 answer_id=status.id
+#                 in_reply_to_user_id=status.in_reply_to_user_id
+#
+#                 telegram_bot_sendtext(f"ATRIB ERROR: {replied_to}, 'nesting', {in_reply_to_user_id}, 'replied to', {replied_to}, 'message', {status.text}")
+#
+#             update_status = f""" #ConstellationsFest live RT. From 16-24 NOV:
+#
+# https://twitter.com/{answer_user}/status/{answer_id}
+#              """
+#
+#             # don't reply to yourself!!
+#             self_ids = os.getenv("TWT_ID"), os.getenv("TWT_ID")
+#             if status.user.id not in self_ids:
+#
+#                 api = twitter_setup()
+#                 api.update_status(update_status,
+#                 auto_populate_reply_metadata=True)
+#
+#
+#     def on_error(self, status):
+#         telegram_bot_sendtext(f"ERROR with: {status}")
+#
+# def listen_stream_and_rt(keywords_list):
+#     api = twitter_setup()
+#     myStreamListener = MyStreamListener()
+#     try:
+#         myStream = tweepy.Stream(auth=api.auth, listener=myStreamListener)
+#         myStream.filter(track=keywords_list, is_async=True)
+#     except Exception as ex:
+#         telegram_bot_sendtext(f"ERROR with: {ex}")
+#         pass
 
 
 def display_help():
@@ -716,6 +736,7 @@ def display_help():
     print("    rtg    Search and retweet keywords from global feed")
     print("    rtl    Search and retweet keywords from list feed")
     print("    glv    Fav tweets from list or globally")
+    print("    glvn   Fav tweets NOW from list or globally")
     print("    rto    Retweet last own tweet")
     print("    sch    Run scheduled jobs on infinite loop")
     print("    help   Show this help screen")

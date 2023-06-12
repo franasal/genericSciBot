@@ -92,9 +92,9 @@ def make_path_dict(base_path):
         # Log file to save all tweeted RSS links (one URL per line).
         "posted_urls_output_file": os.path.join(base_path, "publications.json"),
         # Log file to save all retweeted tweets (one tweetid per line).
-        "posted_retweets_output_file": os.path.join(base_path, "posted-retweets.log"),
+        "posted_retweets_output_file": os.path.join(base_path, "posted-retweets.json"),
         # Log file to save all retweeted tweets (one tweetid per line).
-        "faved_tweets_output_file": os.path.join(base_path, "faved-tweets.log"),
+        "faved_tweets_output_file": os.path.join(base_path, "faved-tweets.json"),
         # Log file to save followers list.
         "users_json_file": os.path.join(base_path, "users.json")
     }
@@ -136,6 +136,24 @@ def check_json_exists(file_path: os.path, init_dict: dict) -> None:
     if not os.path.isfile(file_path):
         with open(file_path, "w") as json_file:
             json.dump(init_dict, json_file, indent=4)
+
+
+def already_fav(in_id, twitter_api):
+
+    fav_s = twitter_api.get_favorites()
+    already_favs=[]
+    for x in fav_s:
+        tweet_object = twitter_api.get_status(x.id, tweet_mode="extended")
+        try:
+            original_id = tweet_object.retweeted_status.id
+    #         retweeters = twitter_api.get_retweets(original_id)
+        except AttributeError:  # Not a Retweet
+            original_id = x.id
+        already_favs.append(original_id)
+    if in_id in already_favs:
+        return True
+    else :
+        return False
 
 def retweet(logger, tweet):
     """
@@ -186,7 +204,7 @@ def retweet_old_own(logger, project_path):
     min_val = min(article_log[x]["count"] for x in article_log)
 
     for art in sorted(list(article_log_reversed), key=None, reverse=False):
-        tweet = twitter_api.statuses_lookup([article_log_reversed[art]["tweet_id"]])
+        tweet = twitter_api.lookup_statuses([article_log_reversed[art]["tweet_id"]])
         if tweet and article_log_reversed[art]["count"] <= min_val:
             retweet(logger, tweet[0])
             article_log[article_log_reversed[art]['id']]["count"] += 1
