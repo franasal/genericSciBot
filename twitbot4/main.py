@@ -162,7 +162,7 @@ def read_rss_and_tweet(logger, project_path) -> None:
 
                 write_to_logfile(article_log, paths_dict["posted_urls_output_file"])
                 break
-            except tweepy.TweepError as e:
+            except tweepy.TweepyException as e:
                 logger.error(f"RSS error, possible duplicate {e}, {article}")
                 write_to_logfile(article_log, paths_dict["posted_urls_output_file"])
                 continue
@@ -181,7 +181,7 @@ def post_tweet(logger, message: str) -> None:
         twitter_api = twitter_setup()
         logger.info(f"post_tweet():{message}")
         twitter_api.update_status(status=message)
-    except tweepy.TweepError as e:
+    except tweepy.TweepyException as e:
         logger.error(e)
 
 
@@ -345,8 +345,8 @@ def try_retweet(project_path, logger,
             logger.info(message_log)
             telegram_bot_sendtext(message_log)
             return True
-        except tweepy.TweepError as e:
-            if e.api_code in IGNORE_ERRORS:
+        except tweepy.TweepyException as e:
+            if e.api_codes in IGNORE_ERRORS:
                 write_to_logfile(
                     {in_tweet_id: {}}, paths_dict["posted_retweets_output_file"]
                 )
@@ -470,7 +470,7 @@ def filter_tweet(logger, project_path, search_results: list, twitter_api):
                     status.quoted_status_id_str, tweet_mode="extended"
                 )
 
-            except tweepy.TweepError as e:
+            except tweepy.TweepyException as e:
                 telegram_bot_sendtext(f"ERROR {e}, twitter.com/anyuser/status/{status.id_str}")
                 continue
 
@@ -647,7 +647,7 @@ def search_and_retweet(logger, project_path, flag: str = "global_search", count:
                 list_id=list_id_alt, count=count, tweet_mode="extended"
             )
 
-    except tweepy.TweepError as e:
+    except tweepy.TweepyException as e:
         logger.exception(e.reason)
         telegram_bot_sendtext(f"ERROR: {e}")
         return
