@@ -648,7 +648,7 @@ def search_and_retweet(logger, project_path, flag: str = "global_search", count:
             )
 
     except tweepy.TweepyException as e:
-        logger.exception(e.reason)
+        logger.exception(e)
         telegram_bot_sendtext(f"ERROR: {e}")
         return
     except Exception as e:
