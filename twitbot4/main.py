@@ -165,6 +165,7 @@ def read_rss_and_tweet(logger, project_path) -> None:
             except tweepy.TweepyException as e:
                 logger.error(f"RSS error, possible duplicate {e}, {article}")
                 write_to_logfile(article_log, paths_dict["posted_urls_output_file"])
+                rss_list = retrieve_rss_urls(project_path)
                 continue
 
 

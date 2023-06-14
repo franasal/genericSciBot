@@ -33,7 +33,7 @@ def loggert(path_log):
 
 def retrieve_rss_urls(url_paths):
     # read rss url file
-    rss_len = random.randrange(10,150)
+    rss_len = random.randrange(50,150)
     with open(os.path.join(url_paths, "rss_urls.txt")) as file:
         lines = [line.rstrip().replace("limit=100", f"limit={rss_len}") for line in file]
 
