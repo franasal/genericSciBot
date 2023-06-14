@@ -468,12 +468,17 @@ def filter_tweet(logger, project_path, search_results: list, twitter_api):
         if status.is_quote_status:
             try:
                 quoted_tweet = twitter_api.get_status(
-                    status.quoted_status_id_str, tweet_mode="extended"
+                    status.quoted_status_id, tweet_mode="extended"
                 )
 
             except tweepy.TweepyException as e:
                 telegram_bot_sendtext(f"ERROR {e}, twitter.com/anyuser/status/{status.id_str}")
                 continue
+            except AttributeError as a:
+                telegram_bot_sendtext(f"ERROR {a}, twitter.com/anyuser/status/{status.id_str}")
+                continue
+
+
 
             end_status = get_longest_text(status) + get_longest_text(quoted_tweet)
         else:
