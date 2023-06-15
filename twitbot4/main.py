@@ -38,11 +38,12 @@ def main():
 
             if sys.argv[2].lower() == "rss":
                 read_rss_and_tweet(logger, project_path)
-            # elif sys.argv[2].lower() == "str":
-            #     if len(sys.argv) == 3:
-            #         listen_stream_and_rt(sys.argv[3].split())
-            #     else:
-            #         raise Exception('add list of hashtags to retweet ie. "#GoVegan, #VegansRock"')
+            elif sys.argv[2].lower() == "str":
+                if len(sys.argv) == 4:
+                    listen_stream_and_rt(sys.argv[3].split()[0])
+                else:
+                    print(sys.argv[3].split()[0], len(sys.argv))
+                    raise Exception('add list of hashtags to retweet ie. "#GoVegan, #VegansRock"')
             elif sys.argv[2].lower() == "rtg":
                 search_and_retweet(logger, project_path, "global_search")
             elif sys.argv[2].lower() == "glv":
@@ -669,62 +670,101 @@ def search_and_retweet(logger, project_path, flag: str = "global_search", count:
 
 banned_profiles = ['nydancesafe']
 
-# class MyStreamListener(tweepy.Stream):
-#
-#     def on_status(self, status):
-#
-#         if hasattr(status, "retweeted_status"):  # Check if Retweet
-#             telegram_bot_sendtext(f" check if retweet:, {status.retweeted_status.text}")
-#             if "constellation" not in status.retweeted_status.text.lower():
-#                 pass
-#         else:
-#             try:
-#                 ## catch nesting
-#                 if status.user.screen_name in banned_profiles or status.in_reply_to_screen_name:
-#                     pass
-#                 replied_to=status.in_reply_to_screen_name
-#                 answer_user=status.user.screen_name
-#                 answer_id=status.id
-#                 ## ignore replies that by default contain mention
-#                 in_reply_to_user_id=status.in_reply_to_user_id
-#
-#                 telegram_bot_sendtext(f"{replied_to}, 'nesting', {in_reply_to_user_id}, 'replied to', {replied_to}, 'message', {status.text}")
-#
-#             except AttributeError:
-#
-#                 replied_to=status.in_reply_to_screen_name
-#                 answer_user=status.user.screen_name
-#                 answer_id=status.id
-#                 in_reply_to_user_id=status.in_reply_to_user_id
-#
-#                 telegram_bot_sendtext(f"ATRIB ERROR: {replied_to}, 'nesting', {in_reply_to_user_id}, 'replied to', {replied_to}, 'message', {status.text}")
-#
-#             update_status = f""" #ConstellationsFest live RT. From 16-24 NOV:
-#
-# https://twitter.com/{answer_user}/status/{answer_id}
-#              """
-#
-#             # don't reply to yourself!!
-#             self_ids = os.getenv("TWT_ID"), os.getenv("TWT_ID")
-#             if status.user.id not in self_ids:
-#
-#                 api = twitter_setup()
-#                 api.update_status(update_status,
-#                 auto_populate_reply_metadata=True)
-#
-#
-#     def on_error(self, status):
-#         telegram_bot_sendtext(f"ERROR with: {status}")
-#
-# def listen_stream_and_rt(keywords_list):
-#     api = twitter_setup()
-#     myStreamListener = MyStreamListener()
-#     try:
-#         myStream = tweepy.Stream(auth=api.auth, listener=myStreamListener)
-#         myStream.filter(track=keywords_list, is_async=True)
-#     except Exception as ex:
-#         telegram_bot_sendtext(f"ERROR with: {ex}")
-#         pass
+
+def vgnHeroCalc(name_, vgnbdays):
+    return f"""#VgnHeroes @{name_} since your #VgnBday you have saved:
+💧 {vgnbdays * 4.164} L of water,
+🌽 {vgnbdays * 18} kg of grain,
+🌲 {vgnbdays * 3} Sq.m of forested land,
+☁️ {vgnbdays * 9} kg CO2 &,
+🐄 {vgnbdays * 0.22} Animal lives!!
+me & {vgnbdays * 0.22} Animals thank you!
+
+source: 5vegan.org"""
+
+
+banned_profiles = ['nydancesafe']
+
+pattern = r'\d{2} \d{2} \d{4}'
+
+date_wrong = True
+today = datetime.datetime.now()
+
+
+def listen_stream_and_rt(keywords_list):
+    self_ids = os.getenv("TWT_ID"), os.getenv("TWT_ID")
+
+    twitter_api = twitter_setup()
+
+    class IDPrinter(tweepy.StreamingClient):
+
+        def on_tweet(self, status):
+            print(status.id)
+
+            # author_pre = twitter_api.get_tweet(status.id, expansions="author_id")
+            _status = twitter_api.get_status(status.id)
+
+            author_name = _status.author.screen_name.lower()
+
+            vgnbdayin = status.text
+            vgndayrex = re.findall(pattern, vgnbdayin)
+
+            if vgndayrex:
+                try:
+                    vgnbday = datetime.datetime.strptime(vgndayrex[0], "%d %m %Y")
+                    if vgnbday < today:
+                        vgnbdays = today - vgnbday
+                        message_to_post = vgnHeroCalc(author_name, vgnbdays.days)
+
+                except ValueError:
+                    print("Wrong format")
+
+                if hasattr(status, "retweeted_status"):  # Check if Retweet
+                    telegram_bot_sendtext(f" check if retweet:, {status.retweeted_status.text}")
+                    if "my vgnbday" not in status.retweeted_status.text.lower():
+                        pass
+
+                elif status.author_id in self_ids or author_name.lower() == "vgnbot":
+                    pass
+                else:
+                    try:
+                        ## catch nesting
+                        if author_name in banned_profiles or status.in_reply_to_screen_name:
+                            pass
+                        answer_id = status.id
+                        ## ignore replies that by default contain mention
+
+                        # telegram_bot_sendtext(f"{replied_to}, 'nesting', {in_reply_to_user_id}, 'replied to', {replied_to}, 'message', {status.text}")
+
+                    except AttributeError:
+
+                        answer_id = status.id
+                        telegram_bot_sendtext(f"Atribute error status {status.id}")
+                        # telegram_bot_sendtext(f"ATRIB ERROR: {replied_to}, 'nesting', {in_reply_to_user_id}, 'replied to', {replied_to}, 'message', {status.text}")
+
+                    update_status = f"""{message_to_post}
+
+        https://twitter.com/{status.author_id}/status/{answer_id}
+                 """
+
+                    # don't reply to yourself!!
+
+                    api = twitter_setup()
+                    api.update_status(update_status,
+                                      auto_populate_reply_metadata=True)
+                    telegram_bot_sendtext(f"Quoting: https://twitter.com/{status.author_id}/status/{answer_id}")
+
+            def on_error(self, status):
+                telegram_bot_sendtext(f"ERROR with: {status}")
+
+    streaming_client = IDPrinter(bearer_token=os.getenv("BEARER_TOKEN"), wait_on_rate_limit=True)
+
+    try:
+        streaming_client.add_rules(tweepy.StreamRule(keywords_list))
+        streaming_client.filter()
+    except Exception as ex:
+        telegram_bot_sendtext(f"ERROR with: {ex}")
+        pass
 
 
 def display_help():
