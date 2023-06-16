@@ -705,7 +705,8 @@ def listen_stream_and_rt():
             tweet_ = status.text
 
             if hasattr(_status, "retweeted_status"):  # Check if Retweet
-                author_name = _status._json["retweeted_status"]["user"]["screen_name"]
+                #author_name = _status._json["retweeted_status"]["user"]["screen_name"]
+                pass
             else:
                 author_name = _status.author.screen_name.lower()
 
