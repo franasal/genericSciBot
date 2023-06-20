@@ -701,8 +701,6 @@ def listen_stream_and_rt():
             answer_id = status.id
 
             tweet_ = status.text
-            print(tweet_)
-
             author_name = _status.author.screen_name.lower()
             vgndayrex = re.findall(pattern, tweet_)
             vgndayrex2 = re.findall(pattern2, tweet_)
