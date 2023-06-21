@@ -674,8 +674,8 @@ def vgnHeroCalc( name_, vgnbdays):
 🌽 {vgnbdays*18} kg of grain,
 🌲 {vgnbdays*3} Sq.m of 🌲 land,
 ☁️ {vgnbdays*9} kg CO2 &,
-🐄 {vgnbdays*0.22} Animal lives!!
-me & {vgnbdays*0.22} Animals thank you!
+🐄 {int(vgnbdays*0.22)} Animal lives!!
+me & {int(vgnbdays*0.22)} Animals thank you!
 
 source: 5vegan.org"""
 
@@ -735,12 +735,16 @@ def listen_stream_and_rt():
                             message_to_post = vgnHeroCalc(author_name, vgnbdays.days)
 
                     except IndexError:
-                        print("Wrong or inconplete format")
-                        if vgndayrex2:
-                            vgnbday = datetime.datetime.strptime(vgndayrex2[0], "%Y")
-                            if vgnbday < today:
-                                vgnbdays = today - vgnbday
-                                message_to_post = vgnHeroCalc(author_name, vgnbdays.days)
+                        print("Wrong or incomplete format")
+                        try:
+                            if vgndayrex2:
+                                vgnbday = datetime.datetime.strptime(vgndayrex2[0], "%Y")
+                                if vgnbday < today:
+                                    vgnbdays = today - vgnbday
+                                    message_to_post = vgnHeroCalc(author_name, vgnbdays.days)
+                        except ValueError:
+                            pass
+
                     except ValueError:
                         pass
 
