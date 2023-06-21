@@ -38,7 +38,7 @@ def main():
 
             if sys.argv[2].lower() == "rss":
                 read_rss_and_tweet(logger, project_path)
-            elif sys.argv[2].lower() == "str":
+            elif sys.argv[2].lower() == "streambot":
                 if len(sys.argv) == 3:
                     listen_stream_and_rt()
                 else:
