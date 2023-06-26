@@ -49,7 +49,7 @@ def main():
             elif sys.argv[2].lower() == "rto":
                 retweet_old_own(logger, project_path)
             elif sys.argv[2].lower() == "sch":
-                scheduled_job(read_rss_and_tweet, retweet_old_own, search_and_retweet, logger, project_path)
+                scheduled_job(read_rss_and_tweet, retweet_old_own, search_and_retweet, vegan_calc_post, logger, project_path)
 
 
         except Exception as e:
