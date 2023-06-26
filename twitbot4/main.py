@@ -38,12 +38,6 @@ def main():
 
             if sys.argv[2].lower() == "rss":
                 read_rss_and_tweet(logger, project_path)
-            elif sys.argv[2].lower() == "streambot":
-                if len(sys.argv) == 3:
-                    listen_stream_and_rt()
-                else:
-                    print(sys.argv[3].split()[0], len(sys.argv))
-                    raise Exception('add list of hashtags to retweet ie. "#GoVegan, #VegansRock"')
             elif sys.argv[2].lower() == "rtg":
                 search_and_retweet(logger, project_path, "global_search")
             elif sys.argv[2].lower() == "glv":
@@ -669,7 +663,7 @@ def search_and_retweet(logger, project_path, flag: str = "global_search", count:
 banned_profiles = ['nydancesafe']
 
 def vgnHeroCalc( name_, vgnbdays):
-    return f"""#VgnHeroes @{name_}, since your #VgnBday you have saved:
+    return f"""#VeganHeroes: @{name_}, since your #VeganBday you have saved:
 💧 {int(vgnbdays*4.16)} L of water,
 🌽 {vgnbdays*18} kg of grain,
 🌲 {vgnbdays*3} Sq.m of 🌲 land,
@@ -688,105 +682,81 @@ date_wrong = True
 today = datetime.datetime.now()
 
 
-def listen_stream_and_rt():
+def vegan_calc_post():
+
+    pattern2 = r'since.*\d{4}'
+    pattern3 = r'\d{2} \d{2} \d{4}'
+    keywords_list = ['vegansince', '#vegansince', '"vegan since"']
+
     self_ids = os.getenv("TWT_ID"), os.getenv("TWT_ID")
+
+    get_query = " OR ".join(keywords_list)
     twitter_api = twitter_setup()
-    keywords_list = ['vgnbday', 'veganbday', 'vegansince', '#vegansince', 'vegan since']
+    count = 200
 
-    class IDPrinter(tweepy.StreamingClient):
+    search_results = twitter_api.search_tweets(
+        q=get_query + " -filter:retweets", count=count, tweet_mode="extended")
 
-        def on_tweet(self, status):
+    my_own_tweets = twitter_api.user_timeline(screen_name='vgnbot', count=200, include_rts=False)
+    my_own_replied = [x.in_reply_to_status_id_str for x in my_own_tweets]
 
-            _status = twitter_api.get_status(status.id)
-            answer_id = status.id
+    keywords_list = ['vegansince', '#vegansince', '"vegan since"']
 
-            tweet_ = status.text
-            author_name = _status.author.screen_name.lower()
-            vgndayrex = re.findall(pattern, tweet_)
-            vgndayrex2 = re.findall(pattern2, tweet_)
-            message_to_post = ""
+    for status in search_results:
 
-            if hasattr(_status, "retweeted_status"):  # Check if Retweet
-                pass
+        #     _status = twitter_api.get_status(status.id)
+        tweet_ = status.full_text
+        author_name = status.author.screen_name.lower()
 
-            elif status.author_id in self_ids or author_name.lower() == "vgnbot":
-                pass
+        if hasattr(status, "retweeted_status"):  # Check if Retweet
+            pass
+        elif status.author.id in self_ids or author_name.lower() == "vgnbot":
+            pass  # don't reply to yourself
+        elif not any(ext in tweet_.lower() for ext in keywords_list):
+            if not status.id_str in my_own_replied:
 
-            elif not any(ext in tweet_.lower() for ext in keywords_list):
-                pass
+                vgndayrex = re.findall(pattern2, tweet_.lower())
+                answer_id = status.id
 
-            else:
-                ## catch nesting
-                if author_name in banned_profiles:
-                    pass
-                elif hasattr(_status, "retweeted_status"):
-                    if author_name in status.in_reply_to_screen_name:
-                        pass
+                if vgndayrex:
+                    message_to_post = ""
+                    print(status.id, author_name)
+                    vgndayrex2 = re.findall(pattern3, tweet_.lower())
+                    if vgndayrex2:
+                        vegan_date = vgndayrex[0].split("since")[1]
+                        vgnbday = datetime.datetime.strptime(vegan_date, "%d %m %Y")
 
-                elif vgndayrex2:
-                    print(vgndayrex, vgndayrex2, author_name)
-
-                    print(tweet_)
-
-                    try:
-                        vgnbday = datetime.datetime.strptime(vgndayrex[0], "%d %m %Y")
                         if vgnbday < today:
                             vgnbdays = today - vgnbday
                             message_to_post = vgnHeroCalc(author_name, vgnbdays.days)
 
-                    except IndexError:
-                        print("Wrong or incomplete format")
-                        try:
-                            if vgndayrex2:
-                                vgnbday = datetime.datetime.strptime(vgndayrex2[0], "%Y")
-                                if vgnbday < today:
-                                    vgnbdays = today - vgnbday
-                                    message_to_post = vgnHeroCalc(author_name, vgnbdays.days)
-                        except ValueError:
-                            pass
-
-                    except ValueError:
-                        pass
-
-                    except AttributeError as e:
-
-                        answer_id = status.id
-
-                        print(e)
-
-                        # telegram_bot_sendtext(f"ATRIB ERROR: {replied_to}, 'nesting', {in_reply_to_user_id}, 'replied to', {replied_to}, 'message', {status.text}")
-
-                    api = twitter_setup()
+                    else:
+                        vegan_year = re.findall("\d{4}", tweet_.lower())[-1]
+                        vgnbday = datetime.datetime.strptime(vegan_year, "%Y")
+                        if vgnbday < today:
+                            vgnbdays = today - vgnbday
+                            message_to_post = vgnHeroCalc(author_name, vgnbdays.days)
 
                     if message_to_post:
+
                         try:
                             update_status = f"""{message_to_post}
 
-        https://twitter.com/{status.author_id}/status/{answer_id}
+        https://twitter.com/{author_name}/status/{answer_id}
                      """
-                            api.update_status(update_status, in_reply_to_status_id=answer_id,
-                                              auto_populate_reply_metadata=True)
+                            twitter_api.update_status(update_status, in_reply_to_status_id=answer_id,
+                                                      auto_populate_reply_metadata=True)
                         except tweepy.errors.Forbidden:
                             update_status = f"""{message_to_post[:-20]}
 
-        https://twitter.com/{status.author_id}/status/{answer_id}
+        https://twitter.com/{author_name}/status/{answer_id}
                      """
-                            api.update_status(update_status[:-20], in_reply_to_status_id=answer_id,
-                                              auto_populate_reply_metadata=True)
+                            twitter_api.update_status(update_status[:-20], in_reply_to_status_id=answer_id,
+                                                      auto_populate_reply_metadata=True)
 
-                        telegram_bot_sendtext(f"Quoting: https://twitter.com/{status.author_id}/status/{answer_id}")
+                        telegram_bot_sendtext(f"Quoting: https://twitter.com/{author_name}/status/{answer_id}")
 
-            def on_error(self, status):
-                telegram_bot_sendtext(f"ERROR with: {status}")
-
-    streaming_client = IDPrinter(bearer_token=os.getenv("BEARER_TOKEN"), wait_on_rate_limit=True)
-
-    try:
-        streaming_client.add_rules(tweepy.StreamRule(" OR ".join(keywords_list)))
-        streaming_client.filter()
-    except Exception as ex:
-        telegram_bot_sendtext(f"ERROR with: {ex}")
-        pass
+                    break
 
 
 def display_help():

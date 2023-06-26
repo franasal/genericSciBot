@@ -444,40 +444,42 @@ def get_longest_text(status) -> str:
         return status.full_text
 
 
-def scheduled_job(read_rss_and_tweet, retweet_old_own, search_and_retweet, logger, project_path):
+def scheduled_job(read_rss_and_tweet, retweet_old_own, search_and_retweet, vegan_calc_post, logger, project_path):
 
     # listen_stream_and_rt('#INSIGHT2021')
 
     schedule = SafeScheduler()
     # job 1
-    schedule.every().day.at("22:20").do(read_rss_and_tweet, logger, project_path)
-    schedule.every().day.at("06:20").do(read_rss_and_tweet, logger, project_path)
-    schedule.every().day.at("14:20").do(read_rss_and_tweet, logger, project_path)
+    # schedule.every().day.at("22:20").do(read_rss_and_tweet, logger, project_path)
+    # schedule.every().day.at("06:20").do(read_rss_and_tweet, logger, project_path)
+    # schedule.every().day.at("14:20").do(read_rss_and_tweet, logger, project_path)
     # job 2
-    schedule.every().day.at("01:10").do(retweet_old_own,logger, project_path)
-    schedule.every().day.at("09:10").do(retweet_old_own,logger, project_path)
-    schedule.every().day.at("17:10").do(retweet_old_own,logger, project_path)
-    # job 3
-
-    schedule.every().day.at("00:20").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("03:20").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("06:20").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("09:20").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("12:20").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("15:20").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("18:20").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("21:20").do(search_and_retweet, logger, project_path, "list_search")
-
-    schedule.every().day.at("01:25").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("04:25").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("07:25").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("10:25").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("13:25").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("16:25").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("19:25").do(search_and_retweet, logger, project_path, "list_search")
-    schedule.every().day.at("22:25").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("01:10").do(retweet_old_own,logger, project_path)
+    # schedule.every().day.at("09:10").do(retweet_old_own,logger, project_path)
+    # schedule.every().day.at("17:10").do(retweet_old_own,logger, project_path)
+    # # job 3
+    #
+    # schedule.every().day.at("00:20").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("03:20").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("06:20").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("09:20").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("12:20").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("15:20").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("18:20").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("21:20").do(search_and_retweet, logger, project_path, "list_search")
+    #
+    # schedule.every().day.at("01:25").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("04:25").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("07:25").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("10:25").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("13:25").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("16:25").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("19:25").do(search_and_retweet, logger, project_path, "list_search")
+    # schedule.every().day.at("22:25").do(search_and_retweet, logger, project_path, "list_search")
     # job love
     schedule.every(5).minutes.do(search_and_retweet, logger, project_path,  "give_love")
+
+    schedule.every(5).minutes.do(vegan_calc_post)
 
     while 1:
         schedule.run_pending()
