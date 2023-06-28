@@ -252,6 +252,37 @@ def get_query(project_path) -> str:
     return include + " " + exclude
 
 
+def check_interactions(project_path, tweet) -> None:
+    """
+    check if previously interacted with a user
+    Args:
+        tweet:
+    Returns:
+    """
+    paths_dict = make_path_dict(project_path)
+
+    if tweet.author.screen_name.lower() == os.getenv("HANDLE"):
+        pass  # don't fav your self
+
+    auth_id = tweet.author.id_str
+    with open(paths_dict["users_json_file"], "r") as json_file:
+        users_dic = json.load(json_file)
+
+        user_list = [
+            users_dic[x]["interactions"]
+            for x in users_dic
+            if users_dic[x]["follower"] == False
+        ]
+
+        down_limit = round(sum(user_list) / len(user_list))
+
+        if auth_id in users_dic:
+            if users_dic[auth_id]["interactions"] >= down_limit:
+                return True
+            else:
+                return False
+        else:
+            return False
 
 def try_retweet(project_path, logger,
     twitter_api: tweepy.API, tweet_text: str, in_tweet_id: str, self_followers: list
@@ -334,6 +365,9 @@ def find_simple_users(logger, project_path,
 
     future_friends = []
     for retweet in retweeters:
+
+        if check_interactions(project_path, retweet):
+            continue
 
         try:
             follows_friends_ratio = (
