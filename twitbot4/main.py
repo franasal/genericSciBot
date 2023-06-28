@@ -672,7 +672,7 @@ def vegan_calc_post():
                     vgndayrex2 = re.findall(pattern3, tweet_.lower())
                     if vgndayrex2:
                         vegan_date = vgndayrex[0].split("since")[1]
-                        vgnbday = datetime.datetime.strptime(vegan_date, "%d %m %Y")
+                        vgnbday = datetime.datetime.strptime(vegan_date.strip(), "%d %m %Y")
 
                         if vgnbday < today:
                             vgnbdays = today - vgnbday
@@ -680,7 +680,7 @@ def vegan_calc_post():
 
                     else:
                         vegan_year = re.findall("\d{4}", tweet_.lower())[-1]
-                        vgnbday = datetime.datetime.strptime(vegan_year, "%Y")
+                        vgnbday = datetime.datetime.strptime(vegan_year.strip(), "%Y")
                         if vgnbday < today:
                             vgnbdays = today - vgnbday
                             message_to_post = vgnHeroCalc(author_name, vgnbdays.days)
