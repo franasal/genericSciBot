@@ -655,6 +655,7 @@ def vegan_calc_post():
         #     _status = twitter_api.get_status(status.id)
         tweet_ = status.full_text
         author_name = status.author.screen_name.lower()
+        twitter_api.create_favorite(id=status.id)
 
         if hasattr(status, "retweeted_status"):  # Check if Retweet
             pass
