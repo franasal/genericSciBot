@@ -663,14 +663,10 @@ date_wrong = True
 today = datetime.datetime.now()
 
 
-
-
 def vegan_calc_post(logger, project_path):
-
     pattern2 = r'since.*\d{4}'
     pattern3 = r'\d{2} \d{2} \d{4}'
     keywords_list = ['vegansince', '#vegansince', '"vegan since"', 'veganbday']
-
 
     self_ids = os.getenv("TWT_ID"), os.getenv("TWT_ID")
 
@@ -683,6 +679,12 @@ def vegan_calc_post(logger, project_path):
 
     my_own_tweets = twitter_api.user_timeline(screen_name='vgnbot', count=200, include_rts=False)
     my_own_replied = [x.in_reply_to_status_id_str for x in my_own_tweets]
+    quoted_mine = [x.quoted_status.id_str for x in my_own_tweets if hasattr(x, "quoted_status")]
+
+    my_own_replied = my_own_replied + quoted_mine
+
+    faved_statuses = twitter_api.get_favorites()
+    faved_statuses_ids = [x.id for x in faved_statuses]
 
     for status in search_results:
 
@@ -697,13 +699,15 @@ def vegan_calc_post(logger, project_path):
         elif [ele.lower() for ele in keywords_list + ['vegan since'] if ele in tweet_.lower()]:
 
             if not status.id_str in my_own_replied:
-                try_give_love(logger, project_path, twitter_api, status.id, [""], True)
+                print(status.id, author_name, tweet_.lower())
+
+                if not status.id in faved_statuses_ids:
+                    try_give_love(logger, project_path, twitter_api, status.id, [""], True)
                 vgndayrex = re.findall(pattern2, tweet_.lower())
                 answer_id = status.id
 
                 if vgndayrex:
                     message_to_post = ""
-                    print(status.id, author_name)
                     vgndayrex2 = re.findall(pattern3, tweet_.lower())
                     if vgndayrex2:
                         vegan_date = vgndayrex[0].split("since")[1]
@@ -721,6 +725,7 @@ def vegan_calc_post(logger, project_path):
                             message_to_post = vgnHeroCalc(author_name, vgnbdays.days)
 
                     if message_to_post:
+                        print(message_to_post)
 
                         try:
                             update_status = f"""{message_to_post}
