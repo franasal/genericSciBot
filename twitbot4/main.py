@@ -667,7 +667,8 @@ def vegan_calc_post():
 
     pattern2 = r'since.*\d{4}'
     pattern3 = r'\d{2} \d{2} \d{4}'
-    keywords_list = ['vegansince', '#vegansince', '"vegan since"']
+    keywords_list = ['vegansince', '#vegansince', '"vegan since"', 'veganbday']
+
 
     self_ids = os.getenv("TWT_ID"), os.getenv("TWT_ID")
 
@@ -680,8 +681,6 @@ def vegan_calc_post():
 
     my_own_tweets = twitter_api.user_timeline(screen_name='vgnbot', count=200, include_rts=False)
     my_own_replied = [x.in_reply_to_status_id_str for x in my_own_tweets]
-
-    keywords_list = ['vegansince', '#vegansince', '"vegan since"']
 
     for status in search_results:
 
