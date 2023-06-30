@@ -160,7 +160,6 @@ def read_rss_and_tweet(logger, project_path) -> None:
             except tweepy.TweepyException as e:
                 logger.error(f"RSS error, possible duplicate {e}, {article}")
                 write_to_logfile(article_log, paths_dict["posted_urls_output_file"])
-                rss_list = retrieve_rss_urls(project_path)
                 continue
 
 
@@ -695,7 +694,7 @@ def vegan_calc_post():
             pass
         elif status.author.id in self_ids or author_name.lower() == "vgnbot":
             pass  # don't reply to yourself
-        elif not any(ext in tweet_.lower() for ext in keywords_list):
+        elif [ele.lower() for ele in keywords_list if(ele in tweet_.lower())]:
             if not status.id_str in my_own_replied:
 
                 vgndayrex = re.findall(pattern2, tweet_.lower())
