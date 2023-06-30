@@ -689,7 +689,6 @@ def vegan_calc_post(logger, project_path):
         #     _status = twitter_api.get_status(status.id)
         tweet_ = status.full_text
         author_name = status.author.screen_name.lower()
-        try_give_love(logger, project_path, twitter_api, status.id, [""], True)
 
         if hasattr(status, "retweeted_status"):  # Check if Retweet
             pass
@@ -698,7 +697,7 @@ def vegan_calc_post(logger, project_path):
         elif [ele.lower() for ele in keywords_list + ['vegan since'] if ele in tweet_.lower()]:
 
             if not status.id_str in my_own_replied:
-
+                try_give_love(logger, project_path, twitter_api, status.id, [""], True)
                 vgndayrex = re.findall(pattern2, tweet_.lower())
                 answer_id = status.id
 
