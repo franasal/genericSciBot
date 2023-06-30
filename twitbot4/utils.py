@@ -480,7 +480,7 @@ def scheduled_job(read_rss_and_tweet, retweet_old_own, search_and_retweet, vegan
     # job love
     schedule.every(10).minutes.do(search_and_retweet, logger, project_path,  "give_love")
 
-    schedule.every(10).minutes.do(vegan_calc_post)
+    schedule.every(10).minutes.do(vegan_calc_post,  logger, project_path)
 
     while 1:
         schedule.run_pending()
