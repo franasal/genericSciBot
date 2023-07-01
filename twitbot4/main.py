@@ -510,7 +510,12 @@ def try_give_love(logger, project_path, twitter_api, in_tweet_id, self_followers
 
     if not already_fav(in_tweet_id, twitter_api):
 
+
         tweet_id = find_simple_users(logger, project_path, twitter_api, in_tweet_id, self_followers)
+        _status = twitter_api.get_status(tweet_id)
+
+        if  is_in_logfile(_status.id_str, paths_dict["faved_tweets_output_file"]):
+            pass
 
         try:
             if not now:
@@ -519,7 +524,6 @@ def try_give_love(logger, project_path, twitter_api, in_tweet_id, self_followers
             json_add_entry(paths_dict["faved_tweets_output_file"], in_tweet_id)
 
             # write_to_logfile({in_tweet_id: {}}, paths_dict["faved_tweets_output_file"])
-            _status = twitter_api.get_status(tweet_id)
             json_add_entry(paths_dict["faved_tweets_output_file"], in_tweet_id)
             message_log = (
                 "faved tweet succesful: https://twitter.com/i/status/{}".format(
