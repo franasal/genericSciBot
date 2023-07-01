@@ -545,6 +545,7 @@ def try_give_love(logger, project_path, twitter_api, in_tweet_id, self_followers
 
     else:
         logger.info("Already faved (id {})".format(in_tweet_id))
+        json_add_entry(paths_dict["faved_tweets_output_file"], in_tweet_id)
         telegram_bot_sendtext("Already faved (id {})".format(in_tweet_id))
 
 
@@ -683,7 +684,7 @@ def vegan_calc_post(logger, project_path):
 
     my_own_replied = my_own_replied + quoted_mine
 
-    faved_statuses = twitter_api.get_favorites()
+    faved_statuses = twitter_api.get_favorites(count=200)
     faved_statuses_ids = [x.id for x in faved_statuses]
 
     for status in search_results:
@@ -699,10 +700,11 @@ def vegan_calc_post(logger, project_path):
         elif [ele.lower() for ele in keywords_list + ['vegan since'] if ele in tweet_.lower()]:
 
             if not status.id_str in my_own_replied:
-                print(status.id, author_name, tweet_.lower())
 
                 if not status.id in faved_statuses_ids:
                     try_give_love(logger, project_path, twitter_api, status.id, [""], True)
+                    print(status.id, author_name, tweet_.lower())
+
                 vgndayrex = re.findall(pattern2, tweet_.lower())
                 answer_id = status.id
 
