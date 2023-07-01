@@ -507,15 +507,10 @@ def try_give_love(logger, project_path, twitter_api, in_tweet_id, self_followers
     # todo add flag to use sleep or fav immediately
 
     paths_dict = make_path_dict(project_path)
+    tweet_id = find_simple_users(logger, project_path, twitter_api, in_tweet_id, self_followers)
+    _status = twitter_api.get_status(tweet_id)
 
-    if not already_fav(in_tweet_id, twitter_api):
-
-
-        tweet_id = find_simple_users(logger, project_path, twitter_api, in_tweet_id, self_followers)
-        _status = twitter_api.get_status(tweet_id)
-
-        if  is_in_logfile(_status.id_str, paths_dict["faved_tweets_output_file"]):
-            pass
+    if not is_in_logfile(_status.id_str, paths_dict["faved_tweets_output_file"]):
 
         try:
             if not now:
@@ -706,10 +701,6 @@ def vegan_calc_post(logger, project_path):
 
             if not status.id_str in my_own_replied:
 
-                if not status.id in faved_statuses_ids:
-                    try_give_love(logger, project_path, twitter_api, status.id, [""], True)
-                    print(status.id, author_name, tweet_.lower())
-
                 vgndayrex = re.findall(pattern2, tweet_.lower())
                 answer_id = status.id
 
@@ -732,6 +723,8 @@ def vegan_calc_post(logger, project_path):
                             message_to_post = vgnHeroCalc(author_name, vgnbdays.days)
 
                     if message_to_post:
+                        try_give_love(logger, project_path, twitter_api, status.id, [""], True)
+
                         print(message_to_post)
 
                         try:
@@ -751,7 +744,12 @@ def vegan_calc_post(logger, project_path):
 
                         telegram_bot_sendtext(f"Quoting: https://twitter.com/{author_name}/status/{answer_id}")
 
-                    break
+                        break
+                else:
+                    print(tweet_.lower())
+
+
+#                     telegram_bot_sendtext(f"nothing new to quote")
 
 
 def display_help():
