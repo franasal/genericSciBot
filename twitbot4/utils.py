@@ -61,7 +61,7 @@ def find_keyword_positions(key_sel, lines):
     for index, line in enumerate(lines):
         if line == key_sel:
             found_ix = index
-        return found_ix
+    return found_ix
 
 
 def retrieve_keywords(keys_path):
