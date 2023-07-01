@@ -540,6 +540,7 @@ def try_give_love(logger, project_path, twitter_api, in_tweet_id, self_followers
             else:
                 json_add_entry(paths_dict["faved_tweets_output_file"], in_tweet_id)
                 logger.error(e)
+                json_add_entry(paths_dict["faved_tweets_output_file"], in_tweet_id)
                 telegram_bot_sendtext(f"{e}")
                 return True
 
