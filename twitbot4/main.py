@@ -651,7 +651,7 @@ def vgnHeroCalc( name_, vgnbdays):
 🌲 {vgnbdays*3} Sq.m of 🌲 land,
 ☁️ {vgnbdays*9} kg CO2 &,
 🐄 {int(vgnbdays*0.22)} Animal lives!!
-I, and {int(vgnbdays*0.22)} Animals thank you!
+\033[1m {int(vgnbdays*0.22)+1} \033[0m Animals thank you!
 
 source: 5vegan.org"""
 
