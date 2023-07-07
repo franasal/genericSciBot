@@ -452,11 +452,11 @@ def scheduled_job(read_rss_and_tweet, retweet_old_own, search_and_retweet, vegan
     schedule = SafeScheduler()
     # job 1
     schedule.every().day.at("22:20").do(read_rss_and_tweet, logger, project_path)
-    schedule.every().day.at("06:20").do(read_rss_and_tweet, logger, project_path)
-    schedule.every().day.at("14:20").do(read_rss_and_tweet, logger, project_path)
+    # schedule.every().day.at("06:20").do(read_rss_and_tweet, logger, project_path)
+    # schedule.every().day.at("14:20").do(read_rss_and_tweet, logger, project_path)
     # job 2
-    schedule.every().day.at("01:10").do(retweet_old_own,logger, project_path)
-    schedule.every().day.at("09:10").do(retweet_old_own,logger, project_path)
+    # schedule.every().day.at("01:10").do(retweet_old_own,logger, project_path)
+    # schedule.every().day.at("09:10").do(retweet_old_own,logger, project_path)
     schedule.every().day.at("17:10").do(retweet_old_own,logger, project_path)
     # # job 3
     #
